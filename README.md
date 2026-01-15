@@ -1,3 +1,18 @@
+---
+title: Phishing URL Detector
+emoji: 🛡️
+colorFrom: blue
+colorTo: red
+sdk: streamlit
+sdk_version: "1.30.0"
+python_version: "3.12"
+app_file: app.py
+pinned: false
+---
+
+
+
+
 # 🛡️ AI-Based Phishing & Malicious URL Detection System
 
 An intelligent machine learning-powered system for detecting phishing and malicious URLs with explainable risk scoring.
