@@ -1,97 +1,62 @@
 import re
-import tldextract
-from urllib.parse import urlparse
 import pandas as pd
+from urllib.parse import urlparse
 
 class URLFeatureExtractor:
     def __init__(self):
         self.suspicious_keywords = [
-            'login', 'verify', 'account', 'secure', 'update', 'password',
-            'bank', 'paypal', 'ebay', 'amazon', 'google', 'microsoft',
-            'apple', 'facebook', 'twitter', 'instagram', 'linkedin'
+            "login", "verify", "update", "secure", "account",
+            "bank", "paypal", "signin", "confirm", "password"
         ]
 
-    def extract_features(self, url):
-        """
-        Extract features from a single URL
-        """
+    def extract_features(self, url: str) -> list:
+        parsed = urlparse(url)
+        domain = parsed.netloc
+        path = parsed.path
+
         features = {}
 
-        # Basic URL features
-        features['url_length'] = len(url)
-        features['num_dots'] = url.count('.')
-        features['num_hyphens'] = url.count('-')
-        features['num_underscores'] = url.count('_')
-        features['num_slashes'] = url.count('/')
-        features['num_question_marks'] = url.count('?')
-        features['num_equals'] = url.count('=')
-        features['num_ampersands'] = url.count('&')
-        features['num_digits'] = sum(c.isdigit() for c in url)
-        features['num_alphabets'] = sum(c.isalpha() for c in url)
+        features["url_length"] = len(url)
+        features["num_dots"] = url.count(".")
+        features["num_hyphens"] = url.count("-")
+        features["num_underscores"] = url.count("_")
+        features["num_slashes"] = url.count("/")
+        features["num_question_marks"] = url.count("?")
+        features["num_equals"] = url.count("=")
+        features["num_ampersands"] = url.count("&")
+        features["num_digits"] = sum(c.isdigit() for c in url)
+        features["num_alphabets"] = sum(c.isalpha() for c in url)
 
-        # Parse URL
-        parsed = urlparse(url)
-        features['scheme'] = parsed.scheme
-        features['netloc'] = parsed.netloc
-        features['path'] = parsed.path
-        features['query'] = parsed.query
-        features['fragment'] = parsed.fragment
+        features["domain_length"] = len(domain)
+        features["subdomain_length"] = max(0, len(domain.split(".")) - 2)
+        features["num_subdomains"] = max(0, len(domain.split(".")) - 2)
 
-        # Domain features
-        domain_info = tldextract.extract(url)
-        features['domain'] = domain_info.domain
-        features['subdomain'] = domain_info.subdomain
-        features['suffix'] = domain_info.suffix
+        features["has_https"] = int(url.startswith("https"))
+        features["has_ip"] = int(bool(re.search(r"\d+\.\d+\.\d+\.\d+", domain)))
+        features["has_at_symbol"] = int("@" in url)
+        features["has_double_slash"] = int("//" in path)
 
-        features['domain_length'] = len(domain_info.domain)
-        features['subdomain_length'] = len(domain_info.subdomain)
-        features['num_subdomains'] = len(domain_info.subdomain.split('.')) if domain_info.subdomain else 0
+        features["suspicious_keywords_count"] = sum(
+            kw in url.lower() for kw in self.suspicious_keywords
+        )
 
-        # Security features
-        features['has_https'] = 1 if parsed.scheme == 'https' else 0
-        features['has_ip'] = 1 if self._is_ip_address(domain_info.domain) else 0
-        features['has_at_symbol'] = 1 if '@' in url else 0
-        features['has_double_slash'] = 1 if '//' in url else 0
+        special_chars = re.findall(r"[^\w\s]", url)
+        features["special_chars_ratio"] = len(special_chars) / max(1, len(url))
 
-        # Suspicious keywords
-        features['suspicious_keywords_count'] = sum(1 for keyword in self.suspicious_keywords if keyword.lower() in url.lower())
+        features["path_length"] = len(path)
+        features["num_path_segments"] = len(path.split("/"))
+        features["query_length"] = len(parsed.query)
+        features["num_query_params"] = len(parsed.query.split("&")) if parsed.query else 0
 
-        # Special characters
-        features['special_chars_ratio'] = sum(1 for c in url if not c.isalnum() and c not in ['.', '-', '_', '/', '?', '=', '&', ':']) / len(url) if len(url) > 0 else 0
+        return list(features.values())
 
-        # Path features
-        path_parts = parsed.path.split('/') if parsed.path else []
-        features['path_length'] = len(parsed.path)
-        features['num_path_segments'] = len([p for p in path_parts if p])
-
-        # Query features
-        features['query_length'] = len(parsed.query)
-        features['num_query_params'] = len(parsed.query.split('&')) if parsed.query else 0
-
-        return features
-
-    def _is_ip_address(self, domain):
-        """
-        Check if domain is an IP address
-        """
-        ip_pattern = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
-        return bool(re.match(ip_pattern, domain))
-
-    def extract_features_from_df(self, df, url_column='url'):
-        """
-        Extract features from a DataFrame containing URLs
-        """
-        feature_list = []
-        for url in df[url_column]:
-            features = self.extract_features(url)
-            feature_list.append(features)
-
-        features_df = pd.DataFrame(feature_list)
-        return pd.concat([df.reset_index(drop=True), features_df], axis=1)
-
-# Example usage
-if __name__ == "__main__":
-    extractor = URLFeatureExtractor()
-    sample_url = "https://login.secure-bank-update.com/verify?user=123&pass=abc"
-    features = extractor.extract_features(sample_url)
-    print("Extracted features:", features)
+    def feature_names(self):
+        return [
+            "url_length", "num_dots", "num_hyphens", "num_underscores",
+            "num_slashes", "num_question_marks", "num_equals", "num_ampersands",
+            "num_digits", "num_alphabets", "domain_length", "subdomain_length",
+            "num_subdomains", "has_https", "has_ip", "has_at_symbol",
+            "has_double_slash", "suspicious_keywords_count",
+            "special_chars_ratio", "path_length", "num_path_segments",
+            "query_length", "num_query_params"
+        ]
