@@ -303,8 +303,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or collaborations:
 - Email: your.email@example.com
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- GitHub Issues: [Create Issue](https://github.com/yourusername/phishing-url-detector/issues)
+- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/girish-madarkar2005)
+- GitHub Issues: [Create Issue](https://github.com/Girish0902/Phishing-URL-Detector/issues)
 
 ---
 
